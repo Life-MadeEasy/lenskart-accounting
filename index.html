@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lenskart → Tally | SG Traders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root {
+  --navy:#0f172a;--navy2:#1e293b;--teal:#0e7490;--tealB:#06b6d4;--tealL:#cffafe;
+  --bg:#f1f5f9;--card:#ffffff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;
+  --green:#059669;--greenL:#d1fae5;--amber:#d97706;--amberL:#fef3c7;
+  --red:#dc2626;--redL:#fee2e2;--r:10px;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.08);
+  --font:'Plus Jakarta Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;min-height:100vh}
+.topbar{background:var(--navy);padding:0 1.5rem;display:flex;align-items:center;gap:1.25rem;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.topbar-logo{font-size:1rem;font-weight:700;color:#fff;letter-spacing:-.01em}
+.topbar-logo span{color:var(--tealB)}
+.tag{font-size:10.5px;font-weight:500;padding:3px 9px;background:rgba(255,255,255,.08);color:#94a3b8;border-radius:20px;border:1px solid rgba(255,255,255,.1)}
+.page{max-width:980px;margin:0 auto;padding:2rem 1.25rem 4rem}
+.section{margin-bottom:1.5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;box-shadow:var(--sh)}
+.card-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:1rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.grid-dl{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.mb{margin-bottom:1rem}
+.hidden{display:none!important}
+label.lbl{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-bottom:5px}
+input[type=text]{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--card);outline:none;transition:border-color .15s,box-shadow .15s}
+input[type=text]:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(14,116,144,.1)}
+label.fc{display:block;padding:1rem;cursor:pointer;border:2px dashed var(--border);border-radius:var(--r);background:var(--card);transition:all .2s;user-select:none}
+label.fc:hover{border-color:var(--teal);background:#f0fdff;transform:translateY(-1px);box-shadow:var(--sh2)}
+label.fc.done{border-style:solid;border-color:var(--green);background:#f0fdf4}
+.fc input[type=file]{display:none}
+.fc-icon{font-size:1.5rem;margin-bottom:5px}
+.fc-name{font-size:12.5px;font-weight:600;color:var(--text)}
+.fc-hint{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+.fc-ok{font-size:11px;color:var(--green);font-weight:500;margin-top:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--navy);color:#fff;width:100%;padding:12px;font-size:14px;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+.btn-primary:hover:not(:disabled){background:var(--navy2);box-shadow:0 4px 8px rgba(0,0,0,.2);transform:translateY(-1px)}
+.btn-teal{background:var(--tealL);color:var(--teal);border:1px solid #a5f3fc}
+.btn-teal:hover{background:#a5f3fc}
+.btn-ghost{background:var(--card);color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.btn-sm{padding:4px 12px;font-size:11px;border-radius:20px;font-family:var(--font);border:1px solid var(--border);background:var(--card);cursor:pointer;color:var(--muted);font-weight:500;transition:all .1s}
+.btn-sm:hover:not(:disabled){background:var(--bg);color:var(--text)}
+.btn-sm:disabled{opacity:.3;cursor:not-allowed}
+.btn-sm.pv-active{background:var(--tealL);color:var(--teal);border-color:#a5f3fc}
+.alert{padding:10px 13px;border-radius:8px;font-size:12.5px}
+.alert>div{margin-bottom:3px}.alert>div:last-child{margin-bottom:0}
+.alert-warn{background:var(--amberL);border:1px solid #fde68a;color:#92400e}
+.alert-err{background:var(--redL);border:1px solid #fecaca;color:#991b1b}
+.sc{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:11px 13px;transition:border-color .15s}
+.sc.selected{border-color:#67e8f9;background:#f0fdff}
+.sc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.sc-label{font-size:11.5px;color:var(--muted);font-weight:500;line-height:1.35}
+.sc-check{accent-color:var(--teal);width:14px;height:14px;cursor:pointer;margin-top:1px}
+.sc-count{font-family:var(--mono);font-size:1.65rem;font-weight:500;color:var(--text);line-height:1;margin:4px 0 2px}
+.sc-vtype{font-size:10.5px;color:var(--muted);margin-bottom:9px}
+.sc-btns{display:flex;gap:6px}
+.preview-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;min-width:900px}
+thead th{padding:7px 9px;background:var(--navy);color:#94a3b8;text-align:left;font-weight:500;white-space:nowrap;font-family:var(--font);font-size:10.5px;letter-spacing:.02em;border-right:1px solid rgba(255,255,255,.05)}
+thead th:last-child{border-right:none}
+tbody tr.vfirst{background:var(--card)}
+tbody tr.vcont{background:#fafcff}
+tbody tr:hover{background:#f0fdff!important}
+tbody td{padding:5px 9px;border-bottom:1px solid #f0f4f8;color:var(--text);white-space:nowrap;font-size:10.5px;border-right:1px solid #f8fafc}
+tbody td:last-child{border-right:none}
+tbody td.cr{color:var(--muted)}
+tbody td.narr{white-space:normal;max-width:220px;color:var(--muted);font-family:var(--font);font-size:10.5px}
+tbody td.empty{color:#cbd5e1}
+.no-data{padding:1.5rem;text-align:center;color:var(--muted);font-family:var(--font);font-size:12px}
+.note-item{font-size:12px;color:var(--muted);margin-bottom:5px;display:flex;gap:8px;line-height:1.5}
+.note-item::before{content:'–';color:var(--teal);flex-shrink:0;font-weight:700}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pulsing{animation:pulse 1.2s ease-in-out infinite}
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.grid-dl{grid-template-columns:1fr}.page{padding:1.25rem .75rem 3rem}}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-logo">Lenskart <span>→ Tally</span></div>
+  <span class="tag">SG Traders · GSTIN 32DBNPG5619A1Z1</span>
+  <span class="tag" style="margin-left:auto">Tally Prime 6.2 · v3</span>
+</nav>
+
+<div class="page">
+
+  <!-- CONFIG -->
+  <div class="section card">
+    <p class="card-title">Required — asked each run</p>
+    <div class="grid2">
+      <div>
+        <label class="lbl" for="capitalAcc">Capital Account name in Tally *</label>
+        <input type="text" id="capitalAcc" placeholder="e.g. Capital Account">
+      </div>
+      <div>
+        <label class="lbl" for="bankAcc">Bank Account name in Tally *</label>
+        <input type="text" id="bankAcc" placeholder="e.g. Federal Bank Current A/c" value="Federal Bank Current A/c">
+      </div>
+    </div>
+  </div>
+
+  <!-- FILE UPLOADS -->
+  <div class="section grid2">
+    <label class="fc" id="card-gstr1" for="file-gstr1">
+      <input type="file" id="file-gstr1" accept=".xlsx,.xls" onchange="handleFile('gstr1',this)">
+      <div class="fc-icon">📊</div>
+      <div class="fc-name">GSTR-1 Workings</div>
+      <div class="fc-hint" id="hint-gstr1">250508_GSTR-1_Workings_April_SG.xlsx</div>
+    </label>
+    <label class="fc" id="card-gstr2b" for="file-gstr2b">
+      <input type="file" id="file-gstr2b" accept=".xlsx,.xls" onchange="handleFile('gstr2b',this)">
+      <div class="fc-icon">📥</div>
+      <div class="fc-name">GSTR-2B</div>
+      <div class="fc-hint" id="hint-gstr2b">042025_32DBNPG5619A1Z1_GSTR2B.xlsx</div>
+    </label>
+    <label class="fc" id="card-wallet" for="file-wallet">
+      <input type="file" id="file-wallet" accept=".csv" onchange="handleFile('wallet',this)">
+      <div class="fc-icon">💳</div>
+      <div class="fc-name">Lenskart Wallet CSV</div>
+      <div class="fc-hint" id="hint-wallet">walletTransactionHistory…csv</div>
+    </label>
+    <label class="fc" id="card-cashbook" for="file-cashbook">
+      <input type="file" id="file-cashbook" accept=".xlsx,.xls" onchange="handleFile('cashbook',this)">
+      <div class="fc-icon">💵</div>
+      <div class="fc-name">Cash Book</div>
+      <div class="fc-hint" id="hint-cashbook">cash_april.xlsx</div>
+    </label>
+  </div>
+
+  <!-- PROCESS -->
+  <div class="section">
+    <button class="btn btn-primary" id="processBtn" onclick="processFiles()">
+      Generate Tally Import Files ↗
+    </button>
+  </div>
+
+  <div id="msgWarn" class="alert alert-warn mb hidden"></div>
+  <div id="msgErr"  class="alert alert-err  mb hidden"></div>
+
+  <!-- RESULTS -->
+  <div id="results" class="hidden">
+    <div class="section grid3" id="sectionCards"></div>
+    <div class="section grid-dl">
+      <button class="btn btn-teal" onclick="downloadSelected()">↓ Download Selected Sections (Combined Workbook)</button>
+      <button class="btn btn-ghost" id="toggleAllBtn" onclick="toggleAll()">Deselect All</button>
+    </div>
+    <div class="section card">
+      <p class="card-title" id="previewTitle">Preview</p>
+      <div class="preview-wrap">
+        <table><thead><tr id="previewHead"></tr></thead><tbody id="previewBody"></tbody></table>
+      </div>
+      <p id="previewCount" style="font-size:11px;color:var(--muted);margin-top:5px;font-family:var(--mono)"></p>
+    </div>
+    <div class="section card">
+      <p class="card-title">Format & Business Model Notes</p>
+      <div id="notesList"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  TALLY PRIME OFFICIAL COLUMN HEADERS
+// ══════════════════════════════════════════════════════════
+const HDR = [
+  "Voucher Date","Voucher Type Name","Voucher Number",
+  "Buyer/Supplier - Address","Buyer/Supplier - Pincode",
+  "Ledger Name","Ledger Amount","Ledger Amount Dr/Cr",
+  "Item Name","Billed Quantity","Item Rate","Item Rate per","Item Amount",
+  "Change Mode ","Voucher Narration","Reference No."
+];
+const PREVIEW_HDR = ["Voucher Date","Voucher Type Name","Voucher Number","Ledger Name","Ledger Amount","Ledger Amount Dr/Cr","Voucher Narration","Reference No."];
+
+// ══════════════════════════════════════════════════════════
+//  LEDGER NAMES
+// ══════════════════════════════════════════════════════════
+const L = {
+  lkH:    "Lenskart Solutions Pvt Ltd - Haryana",
+  lkR:    "Lenskart Solutions Pvt Ltd - Rajasthan",
+  sB2B:   "Sales - Commission (B2B)",
+  sKL:    "Sales - B2C Kerala",
+  oIGST:  "Output IGST",   oCGST:"Output CGST",   oSGST:"Output SGST",
+  iIGST:  "Input IGST",    iCGST:"Input CGST",     iSGST:"Input SGST",
+  purLK:  "Purchase - Lenskart (B2B)",
+  purRet: "Purchase Return - Lenskart",
+  purDN:  "Purchase - Debit Note (Lenskart)",
+  margin: "Margin Adjustment - Lenskart",
+  train:  "Employee Training Expense",
+  edc:    "EDC Charges",
+  tds:    "TDS Receivable - Lenskart (194H)",
+  wallet: "Lenskart Wallet A/c",
+  payout: "Lenskart Payout Receivable",
+  b2cCust:"B2C Customers",
+  cash:   "Cash",
+  petty:  "Petty Cash Expenses",
+};
+
+const LENSKART_GSTINS = new Set(["06AACCV7324B1ZO","08AACCV7324B1ZK"]);
+
+const TALLY_GROUPS = {
+  [L.lkH]:"Sundry Debtors",[L.lkR]:"Sundry Debtors",
+  [L.b2cCust]:"Sundry Debtors",
+  [L.sB2B]:"Sales Accounts",[L.sKL]:"Sales Accounts",
+  [L.oIGST]:"Duties & Taxes",[L.oCGST]:"Duties & Taxes",[L.oSGST]:"Duties & Taxes",
+  [L.iIGST]:"Duties & Taxes",[L.iCGST]:"Duties & Taxes",[L.iSGST]:"Duties & Taxes",
+  [L.purLK]:"Purchase Accounts",[L.purRet]:"Purchase Accounts",[L.purDN]:"Purchase Accounts",
+  [L.margin]:"Indirect Income",
+  [L.train]:"Indirect Expenses",[L.edc]:"Indirect Expenses",[L.petty]:"Indirect Expenses",
+  [L.tds]:"Current Assets",[L.payout]:"Current Assets",
+  [L.wallet]:"Current Assets",[L.cash]:"Cash-in-Hand",
+};
+
+const SPECIAL_INV = {
+  "SI/24-25/0090284":{ledger:L.edc,   note:"EDC Rental"},
+  "SI/24-25/0090611":{ledger:L.edc,   note:"EDC Transaction Charges"},
+  "SI/24-25/0090784":{ledger:L.train, note:"Employee Training / FATAL"},
+};
+
+const SECTIONS = [
+  {key:"b2bSales",      label:"B2B Sales",                vType:"Sales"},
+  {key:"b2bCNotes",     label:"B2B Credit Notes",          vType:"Credit Note"},
+  {key:"b2cSales",      label:"B2C Sales",                 vType:"Sales"},
+  {key:"b2cCNotes",     label:"B2C Credit Notes",          vType:"Credit Note"},
+  {key:"purchases",     label:"Purchases (GSTR-2B)",       vType:"Purchase"},
+  {key:"purCDNR",       label:"GSTR-2B Credit-Debit Notes",vType:"Debit Note/Purchase"},
+  {key:"cashBook",      label:"Cash Book",                 vType:"Receipt/Payment"},
+  {key:"walletJournal", label:"Wallet Journal",            vType:"Journal/Receipt"},
+  {key:"tds",           label:"TDS Entry",                 vType:"Journal"},
+  {key:"monthEnd",      label:"Month-end Set-off",         vType:"Journal"},
+];
+
+const MO=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// ══════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════
+function fmtDate(v) {
+  if (!v && v!==0) return "";
+  // Excel serial number → convert to date using pure UTC math (no timezone issues)
+  // Excel epoch = Dec 30, 1899 = 25569 days before Unix epoch Jan 1, 1970
+  if (typeof v === 'number') {
+    const d = new Date(Math.round((v - 25569) * 86400000));
+    return `${String(d.getUTCDate()).padStart(2,"0")}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${d.getUTCFullYear()}`;
+  }
+  // JS Date object fallback (from cellDates:true) — use UTC to avoid IST offset
+  if (v instanceof Date) {
+    return `${String(v.getUTCDate()).padStart(2,"0")}-${String(v.getUTCMonth()+1).padStart(2,"0")}-${v.getUTCFullYear()}`;
+  }
+  const s=String(v).trim();
+  const m0=s.match(/^(\d{2}-\d{2}-\d{4})/); if(m0) return m0[1];
+  const m1=s.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})/);
+  if(m1){const mi=MO.findIndex(x=>x.toLowerCase()===m1[2].toLowerCase());if(mi>=0)return `${m1[1]}-${String(mi+1).padStart(2,"0")}-${m1[3]}`;}
+  const m2=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/); if(m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
+  try{const d=new Date(v);if(!isNaN(d))return fmtDate(d);}catch{}
+  return s;
+}
+
+const num = v=>{const f=parseFloat(v);return isNaN(f)?0:+f.toFixed(2);};
+const partyByGSTIN = g=>String(g).startsWith("06")?L.lkH:String(g).startsWith("08")?L.lkR:L.lkH;
+const salesByState = s=>String(s).trim().toUpperCase()==="KL"?L.sKL:`Sales - B2C ${String(s).trim().toUpperCase()}`;
+
+// Build voucher rows — enforces Dr=Cr by computing first entry amount as sum of rest
+function vRows(date,vType,vNo,entries,narr,refNo="") {
+  // Recompute first entry amount to ensure balance
+  const otherDr = entries.slice(1).filter(e=>e.dc==="Dr").reduce((a,e)=>a+num(e.amount),0);
+  const otherCr = entries.slice(1).filter(e=>e.dc==="Cr").reduce((a,e)=>a+num(e.amount),0);
+  const firstDc = entries[0].dc;
+  entries[0].amount = firstDc==="Dr" ? +(otherCr-otherDr).toFixed(2) : +(otherDr-otherCr).toFixed(2);
+  if (entries[0].amount < 0) entries[0].amount = Math.abs(entries[0].amount);
+  return entries.map((e,i)=>({
+    "Voucher Date":         i===0?date:"",
+    "Voucher Type Name":    i===0?vType:"",
+    "Voucher Number":       i===0?String(vNo):"",
+    "Buyer/Supplier - Address":"",
+    "Buyer/Supplier - Pincode":"",
+    "Ledger Name":          e.ledger,
+    "Ledger Amount":        num(e.amount),
+    "Ledger Amount Dr/Cr":  e.dc,
+    "Item Name":"","Billed Quantity":"","Item Rate":"","Item Rate per":"","Item Amount":"",
+    "Change Mode ":"",
+    "Voucher Narration":    i===0?narr:"",
+    "Reference No.":        i===0?String(refNo||""):"",
+  }));
+}
+
+// Simple 2-line voucher helper
+function v2(date,vType,vNo,drLedger,crLedger,amount,narr,refNo="") {
+  return vRows(date,vType,vNo,
+    [{dc:"Dr",ledger:drLedger,amount},{dc:"Cr",ledger:crLedger,amount}],
+    narr,refNo);
+}
+
+// ══════════════════════════════════════════════════════════
+//  PARSERS
+// ══════════════════════════════════════════════════════════
+
+// ── GSTR-1 B2B SALES ──
+function parseB2BSales(wb,vc) {
+  const ws=wb.Sheets["B2B "]||wb.Sheets["B2B"];
+  if(!ws) return {rows:[],count:0,err:"Sheet 'B2B ' not found in GSTR-1"};
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const rows=[];let started=false;
+  for(const r of raw){
+    if(!r?.[0]) continue;
+    if(!started){if(String(r[0]).trim().startsWith("GSTIN")){started=true;continue;}continue;}
+    if(!String(r[0]).match(/^\d{2}[A-Z]/)) continue;
+    const gstin=String(r[0]),invNo=String(r[2]||""),invDate=r[3];
+    const taxable=num(r[9]);
+    const igst=r[10]&&!String(r[10]).startsWith("=")?num(r[10]):+(taxable*0.18).toFixed(2);
+    const invVal=taxable+igst;
+    if(invVal===0) continue;
+    const party=partyByGSTIN(gstin);
+    vc.n++;
+    rows.push(...vRows(fmtDate(invDate),"Sales",vc.n,[
+      {dc:"Dr",ledger:party,amount:invVal},
+      {dc:"Cr",ledger:L.sB2B,amount:taxable},
+      {dc:"Cr",ledger:L.oIGST,amount:igst},
+    ],`B2B Commission | ${gstin} | ${invNo}`,invNo));
+  }
+  return{rows,count:rows.filter(r=>r["Voucher Date"]).length};
+}
+
+// ── GSTR-1 B2B CREDIT NOTES ──
+function parseB2BCreditNotes(wb,vc) {
+  const ws=wb.Sheets["B2B CDNR"];
+  if(!ws) return{rows:[],count:0};
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const rows=[];let started=false;
+  for(const r of raw){
+    if(!r?.[0]) continue;
+    if(!started){if(String(r[0]).trim().startsWith("GSTIN")){started=true;continue;}continue;}
+    if(!String(r[0]).match(/^\d{2}[A-Z]/)) continue;
+    const gstin=String(r[0]),noteNo=String(r[2]||""),noteDate=r[3];
+    const taxable=num(r[10]),igst=num(r[11]),noteVal=taxable+igst;
+    if(noteVal===0) continue;
+    const party=partyByGSTIN(gstin);
+    vc.n++;
+    rows.push(...vRows(fmtDate(noteDate),"Credit Note",vc.n,[
+      {dc:"Cr",ledger:party,amount:noteVal},
+      {dc:"Dr",ledger:L.sB2B,amount:taxable},
+      {dc:"Dr",ledger:L.oIGST,amount:igst},
+    ],`B2B Credit Note | ${gstin} | ${noteNo}`,noteNo));
+  }
+  return{rows,count:rows.filter(r=>r["Voucher Date"]).length};
+}
+
+// ── GSTR-1 B2C SALES ──
+function parseB2CSales(wb,vc) {
+  const ws=wb.Sheets["B2C Invoices"];
+  if(!ws) return{rows:[],count:0,err:"Sheet 'B2C Invoices' not found in GSTR-1"};
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const rows=[];let started=false;
+  for(const r of raw){
+    if(!r?.[0]) continue;
+    const f=String(r[0]).trim();
+    if(!started){
+      if(f.toLowerCase()==="invoice_no"){started=true;continue;}
+      if(String(r[1]||"").toLowerCase()==="hsn"){started=true;continue;}
+      continue;
+    }
+    if(!f.startsWith("INV")) continue;
+    if(String(r[6]||"").toLowerCase()!=="sale") continue;
+    const invNo=f,invDate=r[5];
+    const taxable=num(r[8]),cgst=num(r[10]),sgst=num(r[11]),igst=num(r[12]);
+    const invVal=taxable+cgst+sgst+igst;
+    const custState=String(r[14]||r[13]||"KL");
+    if(invVal===0) continue;
+    const sl=salesByState(custState);
+    const entries=[{dc:"Dr",ledger:L.b2cCust,amount:invVal},{dc:"Cr",ledger:sl,amount:taxable}];
+    if(igst>0) entries.push({dc:"Cr",ledger:L.oIGST,amount:igst});
+    if(cgst>0) entries.push({dc:"Cr",ledger:L.oCGST,amount:cgst});
+    if(sgst>0) entries.push({dc:"Cr",ledger:L.oSGST,amount:sgst});
+    vc.n++;
+    rows.push(...vRows(fmtDate(invDate),"Sales",vc.n,entries,`B2C Sale | ${invNo} | ${custState}`,invNo));
+  }
+  return{rows,count:rows.filter(r=>r["Voucher Date"]).length};
+}
+
+// ── GSTR-1 B2C RETURNS ──
+function parseB2CReturns(wb,vc) {
+  const ws=wb.Sheets["B2C return"];
+  if(!ws) return{rows:[],count:0};
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const rows=[];let started=false;
+  for(const r of raw){
+    if(!r?.[0]) continue;
+    if(!started){if(String(r[0]).trim().toLowerCase()==="invoice_no"){started=true;continue;}continue;}
+    if(!String(r[0]).trim().startsWith("INV")) continue;
+    const invNo=String(r[0]),invDate=r[5];
+    const taxable=Math.abs(num(r[8])),cgst=Math.abs(num(r[10])),sgst=Math.abs(num(r[11])),igst=Math.abs(num(r[12]));
+    const invVal=taxable+cgst+sgst+igst;
+    const custState=String(r[14]||r[13]||"KL");
+    if(invVal===0) continue;
+    const sl=salesByState(custState);
+    const entries=[{dc:"Cr",ledger:L.b2cCust,amount:invVal},{dc:"Dr",ledger:sl,amount:taxable}];
+    if(igst>0) entries.push({dc:"Dr",ledger:L.oIGST,amount:igst});
+    if(cgst>0) entries.push({dc:"Dr",ledger:L.oCGST,amount:cgst});
+    if(sgst>0) entries.push({dc:"Dr",ledger:L.oSGST,amount:sgst});
+    vc.n++;
+    rows.push(...vRows(fmtDate(invDate),"Credit Note",vc.n,entries,`B2C Return | ${invNo} | ${custState}`,invNo));
+  }
+  return{rows,count:rows.filter(r=>r["Voucher Date"]).length};
+}
+
+// ── GSTR-2B PURCHASES ──
+// Columns: r[0]=GSTIN r[1]=TradeName r[2]=InvNo r[4]=Date r[5]=InvVal r[8]=Taxable r[9]=IGST r[10]=CGST r[11]=SGST
+function parseGSTR2BPurchases(wb,vc) {
+  const ws=wb.Sheets["B2B"];
+  if(!ws) return{rows:[],count:0,err:"Sheet 'B2B' not found in GSTR-2B"};
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const rows=[];
+  for(const r of raw){
+    if(!r?.[0]) continue;
+    const gstin=String(r[0]).trim();
+    if(!/^\d{2}/.test(gstin)||gstin.length!==15) continue;
+    const tradeName=String(r[1]||"").trim();
+    const invNo=String(r[2]||""),invDate=r[4];
+    const taxable=num(r[8]),igst=num(r[9]),cgst=num(r[10]),sgst=num(r[11]);
+    const invVal=taxable+igst+cgst+sgst;
+    if(invVal===0) continue;
+    const isLK=LENSKART_GSTINS.has(gstin);
+    const party=isLK?partyByGSTIN(gstin):tradeName;
+    const special=SPECIAL_INV[invNo];
+    const purLedger=special?special.ledger:isLK?L.purLK:tradeName;
+    const noteText=special?special.note:isLK?"Purchase - Lenskart":`Purchase - ${tradeName}`;
+    const entries=[{dc:"Dr",ledger:purLedger,amount:taxable}];
+    if(igst>0) entries.push({dc:"Dr",ledger:L.iIGST,amount:igst});
+    if(cgst>0) entries.push({dc:"Dr",ledger:L.iCGST,amount:cgst});
+    if(sgst>0) entries.push({dc:"Dr",ledger:L.iSGST,amount:sgst});
+    entries.push({dc:"Cr",ledger:party,amount:invVal});
+    vc.n++;
+    rows.push(...vRows(fmtDate(invDate),"Purchase",vc.n,entries,`${noteText} | ${gstin} | ${invNo}`,invNo));
+  }
+  return{rows,count:rows.filter(r=>r["Voucher Date"]).length};
+}
+
+// ── GSTR-2B CDNR ──
+// Columns: r[0]=GSTIN r[2]=NoteNo r[3]=NoteType r[5]=Date r[6]=NoteVal r[9]=Taxable r[10]=IGST r[11]=CGST r[12]=SGST
+function parseGSTR2BCDNR(wb,vc) {
+  const ws=wb.Sheets["B2B-CDNR"];
+  if(!ws){
+    console.warn("CDNR: Sheet B2B-CDNR not found. Available sheets:", Object.keys(wb.Sheets));
+    return{rows:[],count:0,err:"Sheet B2B-CDNR not found"};
+  }
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  console.log("CDNR raw row count:", raw.length);
+  // Log first 10 non-empty rows to diagnose
+  let logged=0;
+  for(const r of raw){
+    if(r?.[0]!==null && r?.[0]!==undefined && logged<10){
+      console.log("CDNR row r[0]:", JSON.stringify(r[0]), "| r[0] type:", typeof r[0], "| r[0] len:", String(r[0]).length, "| r[3]:", JSON.stringify(r[3]));
+      logged++;
+    }
+  }
+  const rows=[];
+  // Simple filter: GSTIN starts with 2 digits — robust against encoding differences
+  for(const r of raw){
+    if(!r?.[0]) continue;
+    const gstin=String(r[0]).trim();
+    // Simple check: must start with 2 digits and be 15 chars — avoids regex complexity
+    if(!/^\d{2}/.test(gstin) || gstin.length!==15) continue;
+    const noteNo=String(r[2]||"");
+    const noteType=String(r[3]||"").trim().toLowerCase();
+    const noteDate=r[5];
+    const taxable=num(r[9]),igst=num(r[10]),cgst=num(r[11]),sgst=num(r[12]);
+    const noteVal=num(r[6]);
+    if(noteVal===0) continue;
+    const isLK=LENSKART_GSTINS.has(gstin);
+    const party=isLK?partyByGSTIN(gstin):String(r[1]||gstin).trim();
+    vc.n++;
+    if(noteType.includes("credit")) {
+      const entries=[{dc:"Dr",ledger:party,amount:noteVal},{dc:"Cr",ledger:L.purRet,amount:taxable}];
+      if(igst>0) entries.push({dc:"Cr",ledger:L.iIGST,amount:igst});
+      if(cgst>0) entries.push({dc:"Cr",ledger:L.iCGST,amount:cgst});
+      if(sgst>0) entries.push({dc:"Cr",ledger:L.iSGST,amount:sgst});
+      rows.push(...vRows(fmtDate(noteDate),"Debit Note",vc.n,entries,`Purchase Return | ${gstin} | ${noteNo}`,noteNo));
+    } else {
+      const entries=[{dc:"Dr",ledger:L.purDN,amount:taxable}];
+      if(igst>0) entries.push({dc:"Dr",ledger:L.iIGST,amount:igst});
+      if(cgst>0) entries.push({dc:"Dr",ledger:L.iCGST,amount:cgst});
+      if(sgst>0) entries.push({dc:"Dr",ledger:L.iSGST,amount:sgst});
+      entries.push({dc:"Cr",ledger:party,amount:noteVal});
+      rows.push(...vRows(fmtDate(noteDate),"Purchase",vc.n,entries,`Purchase Debit Note | ${gstin} | ${noteNo}`,noteNo));
+    }
+  }
+  console.log("CDNR parsed rows:", rows.length, "vouchers:", rows.filter(r=>r["Voucher Date"]).length);
+  return{rows,count:rows.filter(r=>r["Voucher Date"]).length};
+}
+
+// ── CASH BOOK ──
+function parseCashBook(wb,bankLedger,capitalAcc,vc) {
+  const ws=wb.Sheets["2025 CR"];
+  if(!ws) return{rows:[],count:0,err:"Sheet '2025 CR' not found in Cash Book"};
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  const rows=[];
+  for(const r of raw){
+    // Date column is an Excel serial number (e.g. 45748 = 01-Apr-2025)
+    // Valid range: serials 43466–47848 = years 2019–2031
+    if(!r?.[0] || typeof r[0]!=='number' || r[0]<43466 || r[0]>47848) continue;
+    const dt=fmtDate(r[0]);
+    const cash=num(r[2]),dep=num(r[9]),exp=num(r[10]),giri=num(r[11]);
+    // Cash collected at store → Dr Cash / Cr Lenskart Wallet
+    // (Lenskart is universal collection agent; SG remits their share via INTER_WALLET)
+    if(cash>0){vc.n++;rows.push(...v2(dt,"Receipt",vc.n,"Cash",L.wallet,cash,`Cash collected at store`,dt));}
+    // Bank deposit → Dr Bank / Cr Cash
+    if(dep>0){vc.n++;rows.push(...v2(dt,"Payment",vc.n,bankLedger,"Cash",dep,`Cash deposited to bank`,dt));}
+    // Expenses → Dr Petty Cash / Cr Cash
+    if(exp>0){vc.n++;rows.push(...v2(dt,"Payment",vc.n,L.petty,"Cash",exp,`Daily cash expenses`,dt));}
+    // Owner drawings → Dr Capital Account / Cr Cash
+    if(giri>0){vc.n++;rows.push(...v2(dt,"Payment",vc.n,capitalAcc,"Cash",giri,`Owner withdrawal`,dt));}
+  }
+  return{rows,count:rows.filter(r=>r["Voucher Date"]).length};
+}
+
+// ── WALLET ──
+function parseWallet(csvData,vc) {
+  const rows=[];let totalB2BTaxable=0,totalCDNRTaxable=0;
+  // TDS base collected from wallet meta — but actual TDS computed from GSTR-1 separately
+  for(const r of csvData){
+    const tx=r.transaction_type||"",op=r.operation_type||"";
+    const amt=num(r.amount);
+    const dt=fmtDate(r.created_at);
+    const txId=String(r.id||r.transaction_id||"").substring(0,20);
+    const ordId=r.deals_order_id||r.store_order_id||"";
+    const narr=`${tx} | Ord:${ordId} | ${(r.comments||"").substring(0,35)}`.substring(0,90);
+    if(amt===0) continue;
+    const push2=(vType,dr,cr,n,ref="")=>{vc.n++;rows.push(...v2(dt,vType,vc.n,dr,cr,amt,n,ref||txId));};
+    switch(tx){
+      // ORDER_COMMISSION: Dr Wallet / Cr Lenskart Solutions (settles commission debtor)
+      // Party split by GSTIN not available in wallet — default to Haryana
+      case "ORDER_COMMISSION":
+        push2("Journal",L.wallet,L.lkH,`Commission received | ${narr}`); break;
+      // COLLECTION_REIMBURSEMENT: Lenskart reimburses SG for B2C margin → Dr Wallet / Cr B2C Customers
+      case "COLLECTION_REIMBURSEMENT":
+      case "REIMBURSEMENT_ADJUSTMENT":
+        push2("Journal",L.wallet,L.b2cCust,`${tx} - B2C margin reimbursed | ${narr}`); break;
+      // COLLECTION_DEDUCTION: Lenskart deducts product cost → Dr Lenskart Solutions / Cr Wallet
+      case "COLLECTION_DEDUCTION":
+      case "DEDUCTION_ADJUSTMENT":
+        push2("Journal",L.lkH,L.wallet,`${tx} - product cost deducted | ${narr}`); break;
+      // MARGIN_ADJUSTMENT: income/expense adjustment
+      case "MARGIN_ADJUSTMENT":
+        op==="CREDIT"
+          ?push2("Journal",L.wallet,L.margin,`Margin Adj Credit | ${narr}`)
+          :push2("Journal",L.margin,L.wallet,`Margin Adj Debit | ${narr}`);
+        break;
+      // MANUAL_CREDIT: wallet top-up → Dr Wallet / Cr Bank (manual top-up)
+      case "MANUAL_CREDIT":
+        push2("Journal",L.wallet,"Manual Credit Payable",`Wallet top-up | ${narr}`); break;
+      // JIT: product cost for JIT orders → Dr Purchase / Cr Wallet
+      case "JIT_ORDER_DEDUCTION":
+        push2("Purchase",L.purLK,L.wallet,`JIT Order deduction | ${narr}`); break;
+      // FATAL/EDC: expense invoices settled via wallet → Dr Lenskart / Cr Wallet
+      case "FATAL":case "EDC_RENTAL":case "EDC_TRANSACTION_CHARGES":
+        push2("Journal",L.lkH,L.wallet,`${tx} invoice settlement | ${narr}`); break;
+      // INTER_WALLET_TRANSFER: SG remits cash share to Lenskart → Dr Lenskart / Cr Wallet
+      case "INTER_WALLET_TRANSFER":
+        push2("Journal",L.lkH,L.wallet,`Cash remittance to Lenskart | ${narr}`); break;
+      // COMMISSION_BANK_PAYOUT: → Dr Lenskart Payout Receivable / Cr Wallet
+      // (Bank side booked separately when reconciling bank statement)
+      case "COMMISSION_BANK_PAYOUT":
+        push2("Journal",L.payout,L.wallet,`Payout receivable | ${narr}`); break;
+      // CUSTOMER_ORDER_REFUND: refund paid to customer via wallet → Dr Lenskart / Cr Wallet
+      case "CUSTOMER_ORDER_REFUND":
+        push2("Journal",L.lkH,L.wallet,`Customer refund | ${narr}`); break;
+      // STORE_ORDER_REFUND: refund recovered → Dr Wallet / Cr Lenskart
+      case "STORE_ORDER_REFUND":
+        push2("Journal",L.wallet,L.lkH,`Store refund recovery | ${narr}`); break;
+    }
+  }
+  return{rows,walletCount:rows.filter(r=>r["Voucher Date"]).length};
+}
+
+// ── TDS ── base = net GSTR-1 B2B taxable split by Haryana / Rajasthan
+function parseTDS(wb,vc) {
+  const ws=wb.Sheets["B2B "]||wb.Sheets["B2B"];
+  if(!ws) return{rows:[],count:0};
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  let grossH=0,grossR=0;let started=false;
+  for(const r of raw){
+    if(!r?.[0]) continue;
+    if(!started){if(String(r[0]).trim().startsWith("GSTIN")){started=true;continue;}continue;}
+    if(!String(r[0]).match(/^\d{2}[A-Z]/)) continue;
+    const gstin=String(r[0]),taxable=num(r[9]);
+    if(gstin.startsWith("06")) grossH+=taxable;
+    else if(gstin.startsWith("08")) grossR+=taxable;
+  }
+  // Less credit notes split by party
+  const wsCDNR=wb.Sheets["B2B CDNR"];
+  let cdnrH=0,cdnrR=0;
+  if(wsCDNR){
+    const rawC=XLSX.utils.sheet_to_json(wsCDNR,{header:1,defval:null});
+    let s2=false;
+    for(const r of rawC){
+      if(!r?.[0]) continue;
+      if(!s2){if(String(r[0]).trim().startsWith("GSTIN")){s2=true;continue;}continue;}
+      if(!String(r[0]).match(/^\d{2}[A-Z]/)) continue;
+      const gstin=String(r[0]),taxable=num(r[10]);
+      if(gstin.startsWith("06")) cdnrH+=taxable;
+      else if(gstin.startsWith("08")) cdnrR+=taxable;
+    }
+  }
+  const netH=+(grossH-cdnrH).toFixed(2);
+  const netR=+(grossR-cdnrR).toFixed(2);
+  const tdsH=+(netH*0.02).toFixed(2);
+  const tdsR=+(netR*0.02).toFixed(2);
+  const rows=[];let count=0;
+  if(tdsH>0){
+    vc.n++;count++;
+    rows.push(...v2("30-04-2025","Journal",vc.n,L.tds,L.lkH,tdsH,
+      `TDS @2% u/s 194H - Haryana | Net ₹${netH} (Gross ₹${grossH} Less CN ₹${cdnrH})`,
+      "TDS-H-APR25"));
+  }
+  if(tdsR>0){
+    vc.n++;count++;
+    rows.push(...v2("30-04-2025","Journal",vc.n,L.tds,L.lkR,tdsR,
+      `TDS @2% u/s 194H - Rajasthan | Net ₹${netR} (Gross ₹${grossR} Less CN ₹${cdnrR})`,
+      "TDS-R-APR25"));
+  }
+  return{rows,count};
+}
+
+// ── MONTH-END SET-OFF ── Lenskart Haryana + Rajasthan closing balances → Wallet
+// This is a manual entry skeleton — amounts computed from net of all postings
+function buildMonthEnd(vc,b2bRows,b2bCNRows,purchRows,cdnrRows,walletRows,tdsRows) {
+  // Net Haryana balance = Dr - Cr across all sections
+  // We give a placeholder — user to fill actual amounts from trial balance
+  const rows=[];
+  const note="Month-end set-off: Dr Lenskart Wallet / Cr Lenskart Solutions H+R. Fill amounts from Trial Balance.";
+  vc.n++;
+  rows.push(...v2("30-04-2025","Journal",vc.n,L.wallet,L.lkH,1,
+    `Month-end set-off — Haryana | Adjust amount from Trial Balance`,"ME-APR25-H"));
+  vc.n++;
+  rows.push(...v2("30-04-2025","Journal",vc.n,L.wallet,L.lkR,1,
+    `Month-end set-off — Rajasthan | Adjust amount from Trial Balance`,"ME-APR25-R"));
+  return{rows,count:2};
+}
+
+// ── LEDGER MASTER ──
+function buildLedgerMaster(bankLedger,capitalAcc,extraSuppliers) {
+  const rows=Object.entries(TALLY_GROUPS).map(([name,group])=>({
+    "Ledger Name":name,"Tally Group":group,"Opening Balance":0,"Notes":""
+  }));
+  rows.push(
+    {"Ledger Name":bankLedger,"Tally Group":"Bank Accounts","Opening Balance":0,"Notes":"Current account - Federal Bank"},
+    {"Ledger Name":capitalAcc,"Tally Group":"Capital Account","Opening Balance":0,"Notes":"Owner capital account"},
+    {"Ledger Name":"Manual Credit Payable","Tally Group":"Current Liabilities","Opening Balance":0,"Notes":"Wallet top-up payable"},
+  );
+  for(const s of extraSuppliers)
+    rows.push({"Ledger Name":s,"Tally Group":"Sundry Creditors","Opening Balance":0,"Notes":"Non-Lenskart GSTR-2B supplier"});
+  return rows;
+}
+
+// ══════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════
+const fileStore={gstr1:null,gstr2b:null,wallet:null,cashbook:null};
+const selected=Object.fromEntries(SECTIONS.map(s=>[s.key,true]));
+let results=null,activePreview="b2bSales";
+
+// ══════════════════════════════════════════════════════════
+//  FILE HANDLING
+// ══════════════════════════════════════════════════════════
+function handleFile(key,input){
+  const f=input.files?.[0];if(!f) return;
+  fileStore[key]=f;
+  document.getElementById(`card-${key}`).classList.add("done");
+  document.getElementById(`hint-${key}`).innerHTML=`<span class="fc-ok">✓ ${f.name}</span>`;
+}
+const readExcel=f=>new Promise((res,rej)=>{
+  const r=new FileReader();
+  r.onload=e=>{try{res(XLSX.read(e.target.result,{type:"array"}));}catch(err){rej(err);}};
+  r.onerror=rej;r.readAsArrayBuffer(f);
+});
+const readCSV=f=>new Promise((res,rej)=>Papa.parse(f,{header:true,skipEmptyLines:true,complete:r=>res(r.data),error:rej}));
+
+// ══════════════════════════════════════════════════════════
+//  EXCEL EXPORT
+// ══════════════════════════════════════════════════════════
+function makeSheet(data){
+  const ws=XLSX.utils.json_to_sheet(data.length?data:[{}],{header:HDR});
+  ws["!cols"]=[12,16,10,0,0,38,12,14,0,0,0,0,0,0,55,24].map((w,i)=>w===0?{hidden:true,wch:0}:{wch:w});
+  return ws;
+}
+function makeWorkbook(sections){
+  const wb=XLSX.utils.book_new();
+  for(const[name,data]of sections){
+    if(!data?.length) continue;
+    XLSX.utils.book_append_sheet(wb,makeSheet(data),name.substring(0,31));
+  }
+  return wb;
+}
+
+// ══════════════════════════════════════════════════════════
+//  PROCESS
+// ══════════════════════════════════════════════════════════
+async function processFiles(){
+  const capL=document.getElementById("capitalAcc").value.trim();
+  const bankL=document.getElementById("bankAcc").value.trim();
+  if(!capL){showMsg("err",["Please enter Capital Account name."]);return;}
+  if(!bankL){showMsg("err",["Please enter Bank Account name."]);return;}
+  const btn=document.getElementById("processBtn");
+  btn.disabled=true;btn.innerHTML='<span class="pulsing">⏳ Processing files…</span>';
+  clearMsgs();
+  const warns=[];
+  try{
+    const g1=fileStore.gstr1    ?await readExcel(fileStore.gstr1)  :null;
+    const g2=fileStore.gstr2b   ?await readExcel(fileStore.gstr2b) :null;
+    const cb=fileStore.cashbook ?await readExcel(fileStore.cashbook):null;
+    const wD=fileStore.wallet   ?await readCSV(fileStore.wallet)   :null;
+    if(!g1) warns.push("GSTR-1 not uploaded — B2B/B2C sections will be empty");
+    if(!g2) warns.push("GSTR-2B not uploaded — Purchase sections will be empty");
+    if(!cb) warns.push("Cash Book not uploaded — Cash entries will be empty");
+    if(!wD) warns.push("Wallet CSV not uploaded — Wallet entries will be empty");
+
+    const vc={n:0};
+    const b2bS  =g1?parseB2BSales(g1,vc)          :{rows:[],count:0};
+    const b2bCN =g1?parseB2BCreditNotes(g1,vc)     :{rows:[],count:0};
+    const b2cS  =g1?parseB2CSales(g1,vc)           :{rows:[],count:0};
+    const b2cCN =g1?parseB2CReturns(g1,vc)         :{rows:[],count:0};
+    const purch =g2?parseGSTR2BPurchases(g2,vc)    :{rows:[],count:0};
+    const purCD =g2?parseGSTR2BCDNR(g2,vc)         :{rows:[],count:0};
+    const cashBk=cb?parseCashBook(cb,bankL,capL,vc) :{rows:[],count:0};
+    const wRes  =wD?parseWallet(wD,vc)              :{rows:[],walletCount:0};
+    const tdsR  =g1?parseTDS(g1,vc)                :{rows:[],count:0};
+    const meR   =buildMonthEnd(vc);
+
+    [b2bS,b2cS,purch,cashBk].forEach(r=>{if(r.err)warns.push(r.err);});
+    if(warns.length) showMsg("warn",warns);
+
+    // Collect non-Lenskart suppliers for Ledger Master
+    const extraSuppliers=new Set();
+    if(g2){
+      const ws2=g2.Sheets["B2B"];
+      if(ws2){
+        const raw2=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
+        let st=false;
+        for(const r of raw2){
+          if(!r?.[0]) continue;
+          if(!st){if(String(r[0]).startsWith("GSTIN of")){st=true;continue;}continue;}
+          if(!String(r[0]).match(/^\d{2}[A-Z]/)) continue;
+          if(!LENSKART_GSTINS.has(String(r[0]))){
+            const name=String(r[1]||"").trim();
+            if(name) extraSuppliers.add(name);
+          }
+        }
+      }
+    }
+
+    results={
+      b2bSales:b2bS.rows,      b2bCNotes:b2bCN.rows,
+      b2cSales:b2cS.rows,      b2cCNotes:b2cCN.rows,
+      purchases:purch.rows,    purCDNR:purCD.rows,
+      cashBook:cashBk.rows,    walletJournal:wRes.rows,
+      tds:tdsR.rows,           monthEnd:meR.rows,
+      ledgerMaster:buildLedgerMaster(bankL,capL,[...extraSuppliers]),
+      counts:{
+        b2bSales:b2bS.count,   b2bCNotes:b2bCN.count,
+        b2cSales:b2cS.count,   b2cCNotes:b2cCN.count,
+        purchases:purch.count, purCDNR:purCD.count,
+        cashBook:cashBk.count, walletJournal:wRes.walletCount,
+        tds:tdsR.count,        monthEnd:meR.count,
+      }
+    };
+    renderResults();
+  }catch(e){showMsg("err",[`Processing error: ${e.message}`]);}
+  btn.disabled=false;btn.innerHTML="Regenerate Tally Import Files ↗";
+}
+
+// ══════════════════════════════════════════════════════════
+//  UI
+// ══════════════════════════════════════════════════════════
+function clearMsgs(){
+  ["msgWarn","msgErr"].forEach(id=>{const el=document.getElementById(id);el.innerHTML="";el.classList.add("hidden");});
+}
+function showMsg(type,msgs){
+  const id=type==="warn"?"msgWarn":"msgErr";
+  const el=document.getElementById(id);
+  el.innerHTML=msgs.map(m=>`<div>${type==="warn"?"⚠":"✗"} ${m}</div>`).join("");
+  el.classList.remove("hidden");
+}
+function renderResults(){
+  document.getElementById("results").classList.remove("hidden");
+  renderSectionCards();setPreview("b2bSales");renderNotes();
+  document.getElementById("results").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderSectionCards(){
+  document.getElementById("sectionCards").innerHTML=SECTIONS.map(s=>{
+    const count=results.counts[s.key]??0,hasData=results[s.key]?.length>0;
+    return`<div class="sc ${selected[s.key]?'selected':''}" id="sc-${s.key}">
+      <div class="sc-head"><div class="sc-label">${s.label}</div>
+      <input class="sc-check" type="checkbox" id="chk-${s.key}" ${selected[s.key]?'checked':''}
+        onchange="toggleSection('${s.key}',this.checked)"></div>
+      <div class="sc-count">${count}</div>
+      <div class="sc-vtype">${s.vType}</div>
+      <div class="sc-btns">
+        <button class="btn-sm ${activePreview===s.key?'pv-active':''}" id="pvbtn-${s.key}" onclick="setPreview('${s.key}')">Preview</button>
+        <button class="btn-sm" ${hasData?'':'disabled'} onclick="downloadOne('${s.key}')">↓ Download</button>
+      </div></div>`;
+  }).join("");
+}
+function toggleSection(key,val){
+  selected[key]=val;
+  const c=document.getElementById(`sc-${key}`);
+  val?c.classList.add("selected"):c.classList.remove("selected");
+  document.getElementById("toggleAllBtn").textContent=SECTIONS.every(s=>selected[s.key])?"Deselect All":"Select All";
+}
+function toggleAll(){
+  const nv=!SECTIONS.every(s=>selected[s.key]);
+  SECTIONS.forEach(s=>{
+    selected[s.key]=nv;
+    const chk=document.getElementById(`chk-${s.key}`),c=document.getElementById(`sc-${s.key}`);
+    if(chk)chk.checked=nv;nv?c.classList.add("selected"):c.classList.remove("selected");
+  });
+  document.getElementById("toggleAllBtn").textContent=nv?"Deselect All":"Select All";
+}
+function setPreview(key){
+  activePreview=key;
+  document.querySelectorAll('[id^="pvbtn-"]').forEach(b=>b.classList.remove("pv-active"));
+  const pb=document.getElementById(`pvbtn-${key}`);if(pb)pb.classList.add("pv-active");
+  const sec=SECTIONS.find(s=>s.key===key);
+  document.getElementById("previewTitle").textContent=`Preview — ${sec?.label||key} (first 20 rows)`;
+  const rows=results?.[key]||[];
+  document.getElementById("previewHead").innerHTML=PREVIEW_HDR.map(h=>`<th>${h}</th>`).join("");
+  const tbody=document.getElementById("previewBody");
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td class="no-data" colspan="${PREVIEW_HDR.length}">No data — upload required file or check sheet names</td></tr>`;
+    document.getElementById("previewCount").textContent="";return;
+  }
+  tbody.innerHTML=rows.slice(0,20).map(row=>{
+    const isFirst=!!row["Voucher Date"];
+    const cells=PREVIEW_HDR.map(h=>{
+      const v=row[h]??"";let cls="";
+      if(h==="Voucher Narration"||h==="Ledger Name")cls="narr";
+      else if(!v)cls="empty";
+      else if(h==="Ledger Amount Dr/Cr"&&v==="Cr")cls="cr";
+      return`<td class="${cls}">${String(v)}</td>`;
+    }).join("");
+    return`<tr class="${isFirst?'vfirst':'vcont'}">${cells}</tr>`;
+  }).join("");
+  document.getElementById("previewCount").textContent=
+    `${results.counts[key]??0} vouchers · ${rows.length} rows · showing 20 · download for full data`;
+}
+function renderNotes(){
+  const notes=[
+    "<b>Official Tally Prime format</b> — column headers match the sample file exactly. Import via Gateway of Tally → Import → Data → Accounting Vouchers.",
+    "<b>B2C Sales:</b> Dr B2C Customers / Cr Sales-B2C Kerala + GST. B2C Customers closes via COLLECTION_REIMBURSEMENT in Wallet Journal.",
+    "<b>B2B Commission:</b> Dr Lenskart Solutions H/R / Cr Sales-Commission B2B + IGST. Settled via ORDER_COMMISSION in Wallet Journal.",
+    "<b>COLLECTION_REIMBURSEMENT ≈ B2C GSTR-1 total</b> (verified: ₹2,21,192 vs ₹2,21,294 — ₹102 timing diff).",
+    "<b>COMMISSION_BANK_PAYOUT:</b> Dr Lenskart Payout Receivable / Cr Wallet. Book bank side separately when reconciling bank statement → Dr Federal Bank / Cr Lenskart Payout Receivable.",
+    "<b>Month-end Set-off:</b> Placeholder entries to close Lenskart Haryana and Rajasthan balances to Wallet. Fill amounts from Trial Balance before importing.",
+    "<b>GSTR-2B non-Lenskart suppliers</b> use exact trade name from GSTR-2B as both purchase and party ledger. Change ledger names in Tally after first import.",
+    "<b>GSTR-2B Credit Notes → Debit Note voucher:</b> Dr Lenskart Solutions / Cr Purchase Return - Lenskart + Input GST. Reduces purchase.",
+    "<b>GSTR-2B Debit Notes → Purchase voucher:</b> Dr Purchase - Debit Note (Lenskart) + Input GST / Cr Lenskart Solutions. Separate ledger from regular purchases.",
+    "<b>TDS split by entity:</b> Two Journal entries — TDS-H (Haryana) and TDS-R (Rajasthan) — 2% u/s 194H on net GSTR-1 B2B taxable per GSTIN (gross less credit notes).",
+    "<b>Voucher Number</b> is global sequential 1,2,3… Tally will renumber on import.",
+    "<b>Dr = Cr enforced</b> on every voucher — first entry amount auto-computed as balancing figure.",
+  ];
+  document.getElementById("notesList").innerHTML=notes.map(n=>`<div class="note-item">${n}</div>`).join("");
+}
+
+// ══════════════════════════════════════════════════════════
+//  DOWNLOAD
+// ══════════════════════════════════════════════════════════
+function downloadOne(key){
+  if(!results?.[key]?.length) return;
+  try{
+    const sec=SECTIONS.find(s=>s.key===key);
+    const wb=makeWorkbook([[sec.label,results[key]],["Ledger Master",results.ledgerMaster]]);
+    XLSX.writeFile(wb,`SG_Traders_Tally_${key}_Apr2025.xlsx`);
+  }catch(e){
+    showMsg("err",[`Download error for ${key}: ${e.message}`]);
+  }
+}
+function downloadSelected(){
+  if(!results) return;
+  const list=SECTIONS.filter(s=>selected[s.key]&&results[s.key]?.length).map(s=>[s.label,results[s.key]]);
+  if(!list.length){showMsg("warn",["No sections selected or no data."]);return;}
+  list.push(["Ledger Master",results.ledgerMaster]);
+  XLSX.writeFile(makeWorkbook(list),"SG_Traders_Tally_Combined_Apr2025.xlsx");
+}
+</script>
+</body>
+</html>
